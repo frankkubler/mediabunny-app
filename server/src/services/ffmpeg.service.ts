@@ -94,20 +94,56 @@ export class FFmpegService {
         command = command.format(options.outputFormat);
       }
 
-      // Codecs
-      if (options.videoCodec) {
-        command = command.videoCodec(options.videoCodec);
-      }
-      if (options.audioCodec) {
-        command = command.audioCodec(options.audioCodec);
+      // Validation et correction des codecs selon le format de sortie
+      let videoCodec = options.videoCodec;
+      let audioCodec = options.audioCodec;
+
+      // Correction automatique pour WebM
+      if (options.outputFormat === 'webm') {
+        if (!videoCodec || (videoCodec !== 'libvpx' && videoCodec !== 'libvpx-vp9')) {
+          videoCodec = 'libvpx-vp9';
+          console.log('[FFmpegService] Codec vidéo corrigé pour WebM:', videoCodec);
+        }
+        if (!audioCodec || (audioCodec !== 'libvorbis' && audioCodec !== 'libopus')) {
+          audioCodec = 'libopus';
+          console.log('[FFmpegService] Codec audio corrigé pour WebM:', audioCodec);
+        }
       }
 
-      // Bitrates
+      // Codecs
+      if (videoCodec) {
+        command = command.videoCodec(videoCodec);
+      }
+      if (audioCodec) {
+        command = command.audioCodec(audioCodec);
+      }
+
+      // Bitrates (validation/correction)
       if (options.videoBitrate) {
-        command = command.videoBitrate(options.videoBitrate);
+        let videoBitrate = options.videoBitrate;
+        // Correction avancée : accepte '2Mk', '2000kk', '2m', '2000K', etc.
+        videoBitrate = videoBitrate.trim();
+        // Corrige les cas comme '2Mk' => '2M', '2000kk' => '2000k', etc.
+        videoBitrate = videoBitrate.replace(/([0-9]+)Mk$/i, '$1M');
+        videoBitrate = videoBitrate.replace(/([0-9]+)kk$/i, '$1k');
+        videoBitrate = videoBitrate.replace(/([0-9]+)[mM]$/i, '$1M');
+        videoBitrate = videoBitrate.replace(/([0-9]+)[kK]$/i, '$1k');
+        // Si la valeur n'est pas au format attendu, fallback à 1000k
+        if (!/^([0-9]+)(k|M)$/i.test(videoBitrate)) {
+          videoBitrate = '1000k';
+        }
+        // Log la valeur utilisée
+        console.log('[FFmpegService] Bitrate vidéo utilisé :', videoBitrate);
+        // Utilisation de outputOptions pour éviter les transformations de fluent-ffmpeg
+        command = command.outputOptions([`-b:v ${videoBitrate}`]);
       }
       if (options.audioBitrate) {
-        command = command.audioBitrate(options.audioBitrate);
+        let audioBitrate = options.audioBitrate;
+        audioBitrate = audioBitrate.replace(/([0-9]+)kk$/i, '$1k');
+        if (!/^([0-9]+)(k|M)$/i.test(audioBitrate)) {
+          audioBitrate = '192k';
+        }
+        command = command.outputOptions([`-b:a ${audioBitrate}`]);
       }
 
       // FPS
@@ -154,7 +190,15 @@ export class FFmpegService {
       // Exécution
       command
         .on('end', () => resolve())
-        .on('error', (err) => reject(new Error(`Erreur FFmpeg: ${err.message}`)))
+        .on('error', (err, stdout, stderr) => {
+          // Log détaillé de l'erreur FFmpeg
+          console.error('Erreur FFmpeg détaillée:', {
+            message: err.message,
+            stdout,
+            stderr
+          });
+          reject(new Error(`Erreur FFmpeg: ${err.message}\nSTDERR: ${stderr}`));
+        })
         .save(outputPath);
     });
   }
