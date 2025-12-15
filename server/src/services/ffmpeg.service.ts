@@ -2,6 +2,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
+import os from 'os';
 
 export interface FFmpegMetadata {
   duration: number;
@@ -259,10 +260,13 @@ export class FFmpegService {
         command = command.input(input);
       });
 
+      // mergeToFile nécessite un dossier temporaire
+      const tmpDir = os.tmpdir();
+
       command
         .on('end', () => resolve())
         .on('error', (err) => reject(new Error(`Erreur concaténation: ${err.message}`)))
-        .mergeToFile(outputPath);
+        .mergeToFile(outputPath, tmpDir);
     });
   }
 
