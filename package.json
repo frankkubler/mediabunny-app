@@ -1,7 +1,7 @@
 {
   "name": "mediabunny-app",
   "version": "1.0.0",
-  "description": "Application web auto-hébergée pour MediaBunny",
+  "private": true,
   "type": "module",
   "scripts": {
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
@@ -9,15 +9,9 @@
     "dev:server": "cd server && npm run dev",
     "dev:client": "cd client && npm run dev",
     "build": "cd client && npm run build && cd ../server && npm run build",
-    "start": "cd server && npm start",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "start": "cd server && npm start"
   },
-  "keywords": ["mediabunny", "video", "audio", "conversion", "media"],
-  "author": "Frank KUBLER",
-  "license": "MPL-2.0",
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.2"
   }
 }
