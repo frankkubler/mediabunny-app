@@ -1,69 +1,75 @@
-# MediaBunny App - Application Web Auto-Hébergée
+# MediaBunny App
 
-Application web moderne et performante pour la conversion de fichiers médias utilisant [MediaBunny](https://github.com/Vanilagy/mediabunny).
+<div align="center">
+
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Vue.js](https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D)
+![Node.js](https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![License](https://img.shields.io/badge/License-MPL--2.0-blue?style=for-the-badge)
+
+### 💾 Application web auto-hébergée moderne pour la conversion de fichiers média
+
+[Installation](#-installation) • [Déploiement](#-déploiement-docker) • [Documentation](#-documentation) • [API](#-api-endpoints)
+
+</div>
+
+---
 
 ## 🚀 Fonctionnalités
 
-- ✅ Conversion multi-formats (MP4, WebM, MP3, WAV, etc.)
-- ✅ Extraction audio depuis vidéo
-- ✅ Analyse complète des métadonnées
-- ✅ Découpage et trim de médias
-- ✅ Redimensionnement vidéo
-- ✅ Interface moderne et réactive (Vue 3 + Tailwind CSS v4 + DaisyUI 5)
-- ✅ Auto-hébergement complet
-- ✅ API REST complète
-- ✅ Déploiement Docker
+- **Conversion multi-formats** - MP4, WebM, MP3, WAV, et plus
+- **Extraction audio** - Extraction audio depuis vidéo
+- **Analyse métadonnées** - Analyse complète des informations média
+- **Édition vidéo** - Découpage, trim, redimensionnement, rotation
+- **Interface moderne** - Vue 3 + Tailwind CSS v4 + DaisyUI 5
+- **Auto-hébergé** - Contrôle total de vos données
+- **API REST complète** - Intégration facile dans vos workflows
+- **Docker ready** - Déploiement en un clic
 
-## ⚠️ Limitations importantes
+## ⚙️ Formats et codecs supportés
+
+MediaBunny utilise l'API **WebCodecs** du navigateur, ce qui limite les formats supportés aux codecs natifs de votre environnement.
 
 ### Codecs supportés
 
-MediaBunny utilise l'API **WebCodecs** du navigateur/Node.js, ce qui signifie que seuls les codecs supportés par votre environnement fonctionneront :
+| Type | Formats supportés | Utilisation |
+|------|------------------|-------------|
+| **Vidéo** | H.264 (AVC), VP8, VP9, AV1 | Conversion, redimensionnement, trim |
+| **Audio** | AAC, Opus, MP3, Vorbis | Extraction, conversion |
+| **Conteneurs** | MP4, WebM, WAV | Input/Output |
 
-**Codecs vidéo supportés (généralement) :**
-- H.264 (AVC)
-- VP8
-- VP9
-- AV1
+### ⚠️ Limitations importantes
 
-**Codecs audio supportés :**
-- AAC
-- Opus
-- MP3
-- Vorbis
-
-**Codecs NON supportés (erreur "undecodable_source_codec") :**
+**Codecs NON supportés (erreur "undecodable_source_codec"):**
 - H.265 (HEVC) - support limité
-- ProRes
-- DNxHD
+- ProRes, DNxHD, DivX
 - Codecs propriétaires
 
-### Environnement serveur
+**Solutions:**
+1. 🌐 **Utiliser MediaBunny côté client** (navigateur) où WebCodecs est pleinement implémenté
+2. 🔄 **Pré-convertir avec FFmpeg** pour compatibilité universelle
+3. 🚀 **Migrer vers FFmpeg côté serveur** (voir [FFMPEG_GUIDE.md](FFMPEG_GUIDE.md))
 
-En environnement **Node.js** (comme dans Docker), le support des codecs est encore plus limité car Node.js n'implémente pas complètement WebCodecs. Pour une conversion côté serveur robuste, il faudrait utiliser **FFmpeg** au lieu de MediaBunny.
+> **Note**: En environnement Node.js/Docker, le support des codecs est plus limité. Pour une production robuste, FFmpeg est recommandé.
 
-### Solution recommandée
-
-Pour un environnement de production avec support complet des codecs :
-1. Utiliser MediaBunny **côté client** (navigateur) où WebCodecs est pleinement implémenté
-2. Ou remplacer MediaBunny par **FFmpeg** côté serveur pour un support universel
-
-## 📌 Technologies Utilisées
+## 📌 Technologies
 
 ### Backend
-- Node.js 20+ avec Express
-- TypeScript
-- MediaBunny 1.26.0 (avec limitations WebCodecs)
-- Multer (gestion fichiers)
+- **Runtime**: Node.js 20+ avec Express
+- **Langage**: TypeScript
+- **Conversion**: MediaBunny 1.26.0
+- **Upload**: Multer
+- **Sécurité**: Helmet.js, CORS
 
 ### Frontend
-- Vue.js 3.5+ (Composition API)
-- Vite 6.x
-- TypeScript
-- **Tailwind CSS 4.0** (CSS-first)
-- **DaisyUI 5.5** (composants UI)
-- Pinia (state management)
-- Axios
+- **Framework**: Vue.js 3.5+ (Composition API)
+- **Build**: Vite 6.x
+- **Langage**: TypeScript
+- **Styling**: Tailwind CSS 4.0 (CSS-first)
+- **UI**: DaisyUI 5.5
+- **State**: Pinia
+- **HTTP**: Axios
 
 ## 📋 Prérequis
 
@@ -73,24 +79,51 @@ Pour un environnement de production avec support complet des codecs :
 
 ## 🛠️ Installation
 
-### Option 1: Installation Manuelle
+### Méthode 1: Docker (recommandé)
 
-1. **Cloner le dépôt**
+> **Warning**: Si vous ne pouvez pas vous connecter, assurez-vous d'accéder au service via localhost ou https, sinon définissez `HTTP_ALLOWED=true`
+
+```yaml
+# docker-compose.yml
+services:
+  mediabunny:
+    image: ghcr.io/frankkubler/mediabunny-app:latest
+    container_name: mediabunny-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MAX_FILE_SIZE=500000000
+      # - HTTP_ALLOWED=true # décommenter si accès en HTTP
+    volumes:
+      - ./uploads:/app/server/uploads
+      - ./output:/app/server/output
+```
+
+Puis démarrer:
+```bash
+docker-compose up -d
+```
+
+Accéder à l'application sur `http://localhost:3000`
+
+### Méthode 2: Installation manuelle
+
+**1. Cloner le dépôt**
 ```bash
 git clone https://github.com/frankkubler/mediabunny-app.git
 cd mediabunny-app
 ```
 
-2. **Installer toutes les dépendances**
+**2. Installer les dépendances**
 ```bash
 npm run install:all
 ```
 
-3. **Configuration**
+**3. Configuration**
 
-Créer les fichiers `.env` :
-
-**server/.env**
+Créer `server/.env`:
 ```env
 PORT=3000
 NODE_ENV=development
@@ -100,127 +133,125 @@ OUTPUT_DIR=./output
 CORS_ORIGIN=http://localhost:5173
 ```
 
-**client/.env**
+Créer `client/.env`:
 ```env
 VITE_API_URL=http://localhost:3000/api
 ```
 
-4. **Lancer en mode développement**
+**4. Lancer en développement**
 ```bash
 npm run dev
 ```
 
-Le serveur démarre sur `http://localhost:3000`  
-Le client démarre sur `http://localhost:5173`
+- Serveur : `http://localhost:3000`
+- Client : `http://localhost:5173`
 
-5. **Build pour production**
+**5. Build production**
 ```bash
 npm run build
 npm start
 ```
 
-### Option 2: Installation Docker
-
-1. **Build et démarrage**
-```bash
-docker-compose up -d
-```
-
-2. **Accéder à l'application**
-```
-http://localhost:3000
-```
-
-3. **Arrêter l'application**
-```bash
-docker-compose down
-```
-
-4. **Voir les logs**
-```bash
-docker logs mediabunny-app -f
-```
-
-## 📁 Structure du Projet
+## 📁 Structure du projet
 
 ```
 mediabunny-app/
-├── server/              # Backend Node.js + Express
+├── server/                # Backend Node.js + Express
 │   ├── src/
-│   │   ├── controllers/ # Logique métier
-│   │   ├── routes/      # Routes API
-│   │   ├── services/    # Services (MediaBunny)
-│   │   ├── middleware/  # Middlewares
-│   │   └── utils/       # Utilitaires
-│   ├── uploads/         # Fichiers uploadés
-│   └── output/          # Fichiers convertis
-├── client/              # Frontend Vue.js 3
+│   │   ├── controllers/   # Logique métier
+│   │   ├── routes/        # Routes API
+│   │   ├── services/      # Services (MediaBunny)
+│   │   ├── middleware/    # Middlewares
+│   │   └── utils/         # Utilitaires
+│   ├── uploads/           # Fichiers uploadés
+│   └── output/            # Fichiers convertis
+├── client/                # Frontend Vue.js 3
 │   ├── src/
-│   │   ├── components/  # Composants Vue
-│   │   ├── views/       # Pages
-│   │   ├── stores/      # State management (Pinia)
-│   │   └── services/    # Services API
-│   └── dist/            # Build production
-├── docker-compose.yml   # Configuration Docker
-└── Dockerfile
+│   │   ├── components/    # Composants Vue
+│   │   ├── views/         # Pages
+│   │   ├── stores/        # State management (Pinia)
+│   │   └── services/      # Services API
+│   └── dist/              # Build production
+├── docker-compose.yml     # Configuration Docker
+└── Dockerfile             # Image Docker
 ```
 
 ## 📡 API Endpoints
 
 ### Media
 
-- `POST /api/media/upload` - Upload un fichier
-- `GET /api/media/metadata/:fileId` - Récupère les métadonnées
-- `DELETE /api/media/:fileId` - Supprime un fichier
-- `GET /api/media/list` - Liste tous les fichiers
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `POST` | `/api/media/upload` | Upload un fichier |
+| `GET` | `/api/media/metadata/:fileId` | Récupère les métadonnées |
+| `GET` | `/api/media/list` | Liste tous les fichiers |
+| `DELETE` | `/api/media/:fileId` | Supprime un fichier |
 
 ### Conversion
 
-- `POST /api/conversion/convert` - Convertit un fichier
-  ```json
-  {
-    "fileId": "uuid-du-fichier",
-    "outputFormat": "mp4",
-    "codec": "avc",
-    "bitrate": 5000000
-  }
-  ```
-- `POST /api/conversion/extract-audio` - Extrait l'audio
-- `POST /api/conversion/resize` - Redimensionne une vidéo
-- `POST /api/conversion/trim` - Découpe un média
-- `POST /api/conversion/rotate` - Pivote une vidéo
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| `POST` | `/api/conversion/convert` | Convertit un fichier |
+| `POST` | `/api/conversion/extract-audio` | Extrait l'audio |
+| `POST` | `/api/conversion/resize` | Redimensionne une vidéo |
+| `POST` | `/api/conversion/trim` | Découpe un média |
+| `POST` | `/api/conversion/rotate` | Pivote une vidéo |
+
+**Exemple de conversion:**
+```json
+POST /api/conversion/convert
+{
+  "fileId": "uuid-du-fichier",
+  "outputFormat": "mp4",
+  "codec": "avc",
+  "bitrate": 5000000
+}
+```
 
 ## 🔧 Configuration
 
-### Variables d'environnement Serveur
+### Variables d'environnement serveur
 
-- `PORT`: Port du serveur (défaut: 3000)
-- `NODE_ENV`: Environnement (development/production)
-- `MAX_FILE_SIZE`: Taille max des fichiers en octets (défaut: 500MB)
-- `UPLOAD_DIR`: Dossier des uploads
-- `OUTPUT_DIR`: Dossier des fichiers convertis
-- `CORS_ORIGIN`: Origin CORS autorisée
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | 3000 | Port du serveur |
+| `NODE_ENV` | development | Environnement (development/production) |
+| `MAX_FILE_SIZE` | 500000000 | Taille max des fichiers en octets (500MB) |
+| `UPLOAD_DIR` | ./uploads | Dossier des uploads |
+| `OUTPUT_DIR` | ./output | Dossier des fichiers convertis |
+| `CORS_ORIGIN` | http://localhost:5173 | Origin CORS autorisée |
+| `HTTP_ALLOWED` | false | Autoriser HTTP (uniquement en local) |
 
-### Variables d'environnement Client
+### Variables d'environnement client
 
-- `VITE_API_URL`: URL de l'API backend
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | URL de l'API backend |
 
-## ✨ Tailwind CSS v4 et DaisyUI 5
+## 🐳 Déploiement Docker
 
-Cette application utilise les **dernières versions** de Tailwind CSS et DaisyUI :
+```bash
+# Build et démarrage
+docker-compose up -d
 
-### Changements importants Tailwind CSS v4
+# Voir les logs
+docker-compose logs -f
 
-- **Configuration CSS-first** : Plus de `tailwind.config.js`
-- **Import simple** : `@import "tailwindcss"` 
-- **Plugin Vite** : `@tailwindcss/vite`
-- **Plugins** : `@plugin "daisyui"`
+# Arrêter
+docker-compose down
 
-### DaisyUI 5
+# Rebuild complet
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
 
-- Version 5.5.5 compatible avec Tailwind CSS v4
-- Import via `@plugin "daisyui"`
-- Thèmes prédéfinis
+### Images Docker
+
+| Image | Description |
+|-------|-------------|
+| `ghcr.io/frankkubler/mediabunny-app:latest` | Dernière version stable |
+| `ghcr.io/frankkubler/mediabunny-app:main` | Derniers commits (dev) |
 
 ## 📝 Développement
 
@@ -231,61 +262,43 @@ npm run install:all
 # Mode développement (serveur + client)
 npm run dev
 
-# Build production
-npm run build
-
-# Lancer en production
-npm start
-
 # Serveur uniquement
 npm run dev:server
 
 # Client uniquement
 npm run dev:client
-```
 
-## 🐳 Déploiement Docker
+# Build production
+npm run build
 
-```bash
-# Build
-docker-compose build
-
-# Démarrer
-docker-compose up -d
-
-# Logs
-docker-compose logs -f
-
-# Arrêter
-docker-compose down
-
-# Reconstruire complètement
-docker-compose down
-docker-compose build --no-cache
-docker-compose up -d
+# Lancer en production
+npm start
 ```
 
 ## 🔒 Sécurité
 
-- Validation des types de fichiers
-- Limite de taille configurable
-- Helmet.js pour sécurité HTTP
-- CORS configuré
-- Gestion des erreurs
-- Nettoyage automatique des fichiers
+- ✅ Validation des types de fichiers
+- ✅ Limite de taille configurable
+- ✅ Helmet.js pour sécurité HTTP
+- ✅ CORS configuré
+- ✅ Gestion des erreurs
+- ✅ Nettoyage automatique des fichiers
+- ✅ Protection contre path traversal
 
 ## 🐛 Dépannage
 
 ### Erreur "undecodable_source_codec"
 
-Cette erreur signifie que le codec de votre fichier n'est pas supporté par WebCodecs. Solutions :
+Cette erreur indique que le codec n'est pas supporté par WebCodecs.
+
+**Solutions:**
 
 1. **Utiliser un fichier avec codec supporté** (H.264, VP8, VP9)
-2. **Pré-convertir avec FFmpeg** :
+2. **Pré-convertir avec FFmpeg:**
    ```bash
    ffmpeg -i input.mov -c:v libx264 -c:a aac output.mp4
    ```
-3. **Migrer vers FFmpeg côté serveur** pour support universel
+3. **Migrer vers FFmpeg** pour support universel (voir [FFMPEG_GUIDE.md](FFMPEG_GUIDE.md))
 
 ### Problème de dépendances
 
@@ -295,40 +308,39 @@ rm package-lock.json server/package-lock.json client/package-lock.json
 npm run install:all
 ```
 
-### Warnings FileHandle
-
-Les warnings de fermeture de FileHandle ont été corrigés dans les dernières versions. Assurez-vous d'avoir la dernière version :
+### Erreurs Docker
 
 ```bash
-git pull origin main
-docker-compose down
+# Vérifier les logs
+docker logs mediabunny-app -f
+
+# Rebuild complet
+docker-compose down -v
 docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## 🚀 Améliorations futures
+## 🚀 Roadmap
 
-### Pour production
+### Version 2.0
+- [ ] Migration vers FFmpeg pour support universel des codecs
+- [ ] Queue de jobs (Bull/BullMQ) pour traitement asynchrone
+- [ ] Stockage S3 pour scalabilité
+- [ ] Authentification JWT + OAuth2
+- [ ] Rate limiting et quotas utilisateur
+- [ ] Historique des conversions
+- [ ] Prévisualisation vidéo avant conversion
+- [ ] Batch processing
+- [ ] API webhooks
 
-1. **Remplacer MediaBunny par FFmpeg** côté serveur
-   - Support universel des codecs
-   - Meilleures performances
-   - Plus de fonctionnalités
+## 📚 Documentation
 
-2. **Ajouter une queue de jobs** (Bull/BullMQ)
-   - Traitement asynchrone
-   - Gestion de la charge
-   - Retry automatique
-
-3. **Implémenter le stockage S3**
-   - Scalabilité
-   - CDN
-   - Durabilité
-
-4. **Ajouter authentification**
-   - JWT
-   - OAuth2
-   - Rate limiting
+- [INSTALL.md](INSTALL.md) - Guide d'installation détaillé
+- [QUICKSTART.md](QUICKSTART.md) - Démarrage rapide
+- [USAGE.md](USAGE.md) - Guide d'utilisation
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture technique
+- [FFMPEG_GUIDE.md](FFMPEG_GUIDE.md) - Migration vers FFmpeg
+- [CLIENT_CONVERSION.md](CLIENT_CONVERSION.md) - Conversion côté client
 
 ## 📚 Ressources
 
@@ -340,18 +352,35 @@ docker-compose up -d
 - [Vite](https://vitejs.dev)
 - [WebCodecs API](https://developer.mozilla.org/en-US/docs/Web/API/WebCodecs_API)
 
+## 🙏 Contributeurs
+
+Les contributions sont les bienvenues ! Consultez les [issues ouvertes](https://github.com/frankkubler/mediabunny-app/issues) pour la liste des tâches.
+
+Utilisez les [conventional commits](https://www.conventionalcommits.org/) pour vos messages de commit.
+
 ## 📝 Licence
 
 Ce projet utilise MediaBunny sous licence MPL-2.0.
 
-## 🙏 Remerciements
+## ⭐ Star History
 
-- [MediaBunny](https://github.com/Vanilagy/mediabunny) par Vanilagy
-- [Vue.js](https://vuejs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [DaisyUI](https://daisyui.com/)
+[![Star History Chart](https://api.star-history.com/svg?repos=frankkubler/mediabunny-app&type=Date)](https://star-history.com/#frankkubler/mediabunny-app&Date)
 
 ---
 
-**Auteur** : Frank KUBLER  
-**Repository** : [https://github.com/frankkubler/mediabunny-app](https://github.com/frankkubler/mediabunny-app)
+<div align="center">
+
+**Auteur**: Frank KUBLER  
+**Repository**: [github.com/frankkubler/mediabunny-app](https://github.com/frankkubler/mediabunny-app)
+
+Si ce projet vous aide, n'hésitez pas à lui donner une ⭐ !
+
+</div>
+
+## About
+
+💾 Application web auto-hébergée moderne pour la conversion de fichiers média avec MediaBunny - Vue.js 3 + Node.js + TypeScript ⚙️
+
+### Topics
+
+`converter` `typescript` `media-conversion` `convert` `conversion` `video-converter` `audio-converter` `self-hosted` `file-converter` `file-conversion` `vuejs` `nodejs` `docker` `mediabunny` `tailwindcss` `daisyui` `vite` `webcodecs`
