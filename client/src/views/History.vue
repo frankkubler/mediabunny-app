@@ -28,7 +28,7 @@
               <tr v-for="file in mediaStore.files" :key="file.id">
                 <td>{{ file.filename }}</td>
                 <td>{{ formatFileSize(file.size) }}</td>
-                <td>{{ formatDate(file.createdAt) }}</td>
+                <td>{{ file.createdAt ? formatDate(file.createdAt) : 'N/A' }}</td>
                 <td>
                   <button 
                     @click="deleteFile(file.id)" 
