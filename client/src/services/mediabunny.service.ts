@@ -32,13 +32,13 @@ export interface ConversionOptions {
 export interface MediaMetadata {
   duration: number;
   video: {
-    codec: string;
+    codec: string | null;
     width: number;
     height: number;
     rotation: number;
   } | null;
   audio: {
-    codec: string;
+    codec: string | null;
     sampleRate: number;
     channels: number;
   } | null;
@@ -77,7 +77,7 @@ export async function readMetadata(file: File): Promise<MediaMetadata> {
         codec: videoTrack.codec,
         width: videoTrack.displayWidth,
         height: videoTrack.displayHeight,
-        rotation: videoTrack.rotation,
+        rotation: videoTrack.rotation as number,
       } : null,
       audio: audioTrack ? {
         codec: audioTrack.codec,
@@ -140,8 +140,6 @@ export async function convertFile(
 
     // Suivre la progression si callback fourni
     if (onProgress) {
-      // MediaBunny ne fournit pas de callback de progression directement
-      // On peut simuler avec des étapes
       onProgress(0);
     }
 
