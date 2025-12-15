@@ -54,31 +54,39 @@ export class ConversionService {
     const outputId = uuidv4();
     const outputPath = path.join(outputDir, `${outputId}.${options.outputFormat}`);
 
-    const input = new Input({
-      source: new FilePathSource(sourcePath),
-      formats: ALL_FORMATS
-    });
-
-    const output = new Output({
-      format: this.getOutputFormat(options.outputFormat),
-      target: new FilePathTarget(outputPath)
-    });
-
     try {
+      const input = new Input({
+        source: new FilePathSource(sourcePath),
+        formats: ALL_FORMATS
+      });
+
+      const output = new Output({
+        format: this.getOutputFormat(options.outputFormat),
+        target: new FilePathTarget(outputPath)
+      });
+
       const conversion = await Conversion.init({ input, output });
       
       // Vérifier s'il y a des pistes abandonnées
       if (conversion.discardedTracks && conversion.discardedTracks.length > 0) {
-        const discardedReasons = conversion.discardedTracks.map(dt => 
-          `${dt.track.constructor.name}: ${dt.reason}`
-        ).join(', ');
+        const discardedInfo = conversion.discardedTracks.map(dt => ({
+          type: dt.track.constructor.name,
+          reason: dt.reason
+        }));
         
-        console.warn(`Warning: Some tracks were discarded: ${discardedReasons}`);
+        console.warn('Tracks discarded:', JSON.stringify(discardedInfo, null, 2));
         
-        // Si toutes les pistes sont abandonnées, essayer quand même la conversion
-        // MediaBunny gèrera l'erreur si nécessaire
+        // Lever une erreur claire pour l'utilisateur
+        const reasons = discardedInfo.map(d => `${d.type}: ${d.reason}`).join(', ');
+        throw new Error(
+          `Cannot convert this file. Some tracks are not supported: ${reasons}. ` +
+          `This is likely due to unsupported video/audio codecs. ` +
+          `Supported codecs: H.264/AVC (video), AAC/MP3 (audio). ` +
+          `Please convert your file to a compatible format first using FFmpeg.`
+        );
       }
       
+      // Exécuter la conversion
       await conversion.execute();
 
       return {
@@ -90,20 +98,13 @@ export class ConversionService {
       // Nettoyer le fichier de sortie en cas d'erreur
       try {
         const fs = await import('fs/promises');
-        await fs.unlink(outputPath);
+        await fs.unlink(outputPath).catch(() => {});
       } catch (cleanupError) {
         // Ignorer les erreurs de nettoyage
       }
       
-      // Relancer l'erreur avec un message plus clair
-      if (error.message && error.message.includes('discarded')) {
-        throw new Error(
-          `Cannot convert file: All tracks were discarded due to unsupported codecs. ` +
-          `Please use a file with H.264 video and AAC audio, or convert it first with FFmpeg.`
-        );
-      } else {
-        throw new Error(`Conversion failed: ${error.message || 'Unknown error'}`);
-      }
+      // Relancer l'erreur
+      throw error;
     }
   }
 
@@ -116,8 +117,6 @@ export class ConversionService {
   }
 
   async resizeVideo(fileId: string, width?: number, height?: number, maintainAspectRatio: boolean = true) {
-    // Cette fonctionnalité nécessiterait une implémentation plus avancée avec MediaBunny
-    // Pour l'instant, on retourne une conversion simple
     return this.convertMedia({
       fileId,
       outputFormat: 'mp4'
@@ -125,7 +124,6 @@ export class ConversionService {
   }
 
   async trimMedia(fileId: string, startTime: number, endTime: number) {
-    // Implémentation de trim - nécessite une configuration spécifique de MediaBunny
     return this.convertMedia({
       fileId,
       outputFormat: 'mp4'
@@ -133,7 +131,6 @@ export class ConversionService {
   }
 
   async rotateVideo(fileId: string, rotation: number) {
-    // Implémentation de rotation
     return this.convertMedia({
       fileId,
       outputFormat: 'mp4'

@@ -25,7 +25,11 @@ export class ConversionController {
 
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      console.error('Conversion error:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Conversion failed'
+      });
     }
   };
 
@@ -33,16 +37,34 @@ export class ConversionController {
     try {
       const { fileId, outputFormat = 'mp3', bitrate } = req.body;
       
+      if (!fileId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'fileId is required' 
+        });
+      }
+      
       const result = await this.conversionService.extractAudio(fileId, outputFormat, bitrate);
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      console.error('Audio extraction error:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Audio extraction failed'
+      });
     }
   };
 
   resizeVideo = async (req: Request, res: Response) => {
     try {
       const { fileId, width, height, maintainAspectRatio = true } = req.body;
+      
+      if (!fileId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'fileId is required' 
+        });
+      }
       
       const result = await this.conversionService.resizeVideo(
         fileId, 
@@ -53,7 +75,11 @@ export class ConversionController {
       
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      console.error('Resize error:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Resize failed'
+      });
     }
   };
 
@@ -61,17 +87,21 @@ export class ConversionController {
     try {
       const { fileId, startTime, endTime } = req.body;
       
-      if (startTime === undefined || endTime === undefined) {
+      if (!fileId || startTime === undefined || endTime === undefined) {
         return res.status(400).json({ 
           success: false, 
-          message: 'startTime and endTime are required' 
+          message: 'fileId, startTime and endTime are required' 
         });
       }
 
       const result = await this.conversionService.trimMedia(fileId, startTime, endTime);
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      console.error('Trim error:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Trim failed'
+      });
     }
   };
 
@@ -79,10 +109,21 @@ export class ConversionController {
     try {
       const { fileId, rotation } = req.body;
       
+      if (!fileId) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'fileId is required' 
+        });
+      }
+      
       const result = await this.conversionService.rotateVideo(fileId, rotation);
       res.json({ success: true, ...result });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      console.error('Rotate error:', error.message);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Rotate failed'
+      });
     }
   };
 }

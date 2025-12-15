@@ -5,17 +5,13 @@ import { deleteFile } from '../utils/filesystem.js';
 
 export class MediaService {
   async getFileMetadata(filePath: string) {
-    let fileHandle: fs.FileHandle | null = null;
-    
-    try {
-      // Ouvrir le fichier manuellement pour contrôler la fermeture
-      fileHandle = await fs.open(filePath, 'r');
-      
-      const input = new Input({
-        source: new FilePathSource(filePath),
-        formats: ALL_FORMATS
-      });
+    // FilePathSource gère lui-même l'ouverture/fermeture des fichiers
+    const input = new Input({
+      source: new FilePathSource(filePath),
+      formats: ALL_FORMATS
+    });
 
+    try {
       const duration = await input.computeDuration();
       const videoTrack = await input.getPrimaryVideoTrack();
       const audioTrack = await input.getPrimaryAudioTrack();
@@ -36,11 +32,9 @@ export class MediaService {
         } : null,
         tags
       };
-    } finally {
-      // Fermer explicitement le fichier
-      if (fileHandle) {
-        await fileHandle.close();
-      }
+    } catch (error: any) {
+      console.error('Error reading metadata:', error);
+      throw new Error(`Failed to read file metadata: ${error.message}`);
     }
   }
 
