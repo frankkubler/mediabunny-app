@@ -5,11 +5,13 @@ import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import mediaRoutes from './routes/media.routes.js';
-import conversionRoutes from './routes/conversion.routes.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { createDirectories } from './utils/filesystem.js';
+import fs from 'fs/promises';
 
+// Routes
+import mediaRoutes from './routes/media.routes.js';
+import ffmpegRoutes from './routes/ffmpeg.routes.js';
+
+// Configuration
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,41 +20,60 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*'
 }));
 app.use(compression());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true
-}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Créer les dossiers nécessaires
-await createDirectories();
+// Créer les répertoires nécessaires
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
+const outputDir = process.env.OUTPUT_DIR || path.join(__dirname, '../output');
 
-// Routes
+await fs.mkdir(uploadDir, { recursive: true });
+await fs.mkdir(outputDir, { recursive: true });
+
+console.log('✓ Directories created');
+
+// Routes API
 app.use('/api/media', mediaRoutes);
-app.use('/api/conversion', conversionRoutes);
+app.use('/api/ffmpeg', ffmpegRoutes);
 
-// Servir les fichiers statiques (client build)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../../client/dist')));
+// Servir les fichiers de sortie
+app.use('/output', express.static(outputDir));
+
+// Servir le client (production)
+const clientPath = path.join(__dirname, '../../client/dist');
+try {
+  await fs.access(clientPath);
+  app.use(express.static(clientPath));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+    res.sendFile(path.join(clientPath, 'index.html'));
   });
+  console.log('✓ Client app served from:', clientPath);
+} catch {
+  console.log('⚠️  Client dist not found. Run: cd client && npm run build');
 }
 
-// Servir les fichiers uploadés et de sortie
-app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads'));
-app.use('/output', express.static(process.env.OUTPUT_DIR || './output'));
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    ffmpeg: 'enabled',
+    redis: process.env.REDIS_URL || 'localhost:6379'
+  });
+});
 
-// Error handling
-app.use(errorHandler);
-
+// Démarrage
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📁 Upload directory: ${process.env.UPLOAD_DIR}`);
-  console.log(`📂 Output directory: ${process.env.OUTPUT_DIR}`);
+  console.log(`📁 Upload directory: ${uploadDir}`);
+  console.log(`📂 Output directory: ${outputDir}`);
+  console.log(`🔴 Redis: ${process.env.REDIS_URL || 'redis://localhost:6379'}`);
+  console.log(`🎥 FFmpeg: Enabled`);
 });

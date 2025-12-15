@@ -1,26 +1,41 @@
 version: '3.8'
 
 services:
-  mediabunny-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+  # Redis pour la queue Bull
+  redis:
+    image: redis:7-alpine
+    container_name: mediabunny-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Application principale
+  app:
+    build: .
     container_name: mediabunny-app
+    restart: unless-stopped
     ports:
       - "3000:3000"
-    volumes:
-      - ./uploads:/app/server/uploads
-      - ./output:/app/server/output
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - MAX_FILE_SIZE=500000000
       - UPLOAD_DIR=/app/server/uploads
       - OUTPUT_DIR=/app/server/output
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - REDIS_URL=redis://redis:6379
+      - MAX_FILE_SIZE=500000000
+    volumes:
+      - ./server/uploads:/app/server/uploads
+      - ./server/output:/app/server/output
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:

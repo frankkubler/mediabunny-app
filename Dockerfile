@@ -1,20 +1,25 @@
-FROM node:20-alpine
+FROM node:20-alpine AS base
+
+# Installer FFmpeg
+RUN apk add --no-cache ffmpeg
+
+# Vérifier installation FFmpeg
+RUN ffmpeg -version
 
 WORKDIR /app
 
-# Copier les fichiers de configuration
-COPY package*.json ./
-COPY server/package*.json ./server/
-COPY client/package*.json ./client/
+# Copier package.json
+COPY package.json ./
+COPY server/package.json ./server/
+COPY client/package.json ./client/
 
 # Installer les dépendances
-RUN npm install --production
-RUN cd server && npm install --production
+RUN npm install
+RUN cd server && npm install
 RUN cd client && npm install
 
 # Copier le code source
-COPY server ./server
-COPY client ./client
+COPY . .
 
 # Build du client
 RUN cd client && npm run build
@@ -25,9 +30,8 @@ RUN cd server && npm run build
 # Créer les dossiers nécessaires
 RUN mkdir -p /app/server/uploads /app/server/output
 
-# Nettoyer les fichiers de dev
-RUN cd client && rm -rf node_modules && npm install --production
-
+# Exposer le port
 EXPOSE 3000
 
+# Démarrer l'application
 CMD ["npm", "start"]
