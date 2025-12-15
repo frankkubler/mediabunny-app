@@ -3,26 +3,27 @@
     <h1 class="text-4xl font-bold mb-8 text-white text-center">🔄 Convertisseur</h1>
 
     <div class="grid grid-cols-1 gap-6">
-      <FileUpload @uploaded="handleFileUploaded" />
+      <FileUploader @uploaded="handleFileUploaded" />
       
-      <MediaInfo v-if="currentFileMetadata" :metadata="currentFileMetadata" />
+      <MetadataDisplay v-if="metadata" :metadata="metadata" />
       
-      <ConversionPanel :fileId="currentFileId" />
+      <ConversionPanel v-if="metadata" :metadata="metadata" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import FileUpload from '@/components/FileUpload.vue';
-import MediaInfo from '@/components/MediaInfo.vue';
+import { useConversionStore } from '@/stores/conversion.store';
+import { storeToRefs } from 'pinia';
+import FileUploader from '@/components/FileUploader.vue';
+import MetadataDisplay from '@/components/MetadataDisplay.vue';
 import ConversionPanel from '@/components/ConversionPanel.vue';
 
-const currentFileId = ref<string | null>(null);
-const currentFileMetadata = ref<any>(null);
+const conversionStore = useConversionStore();
+const { metadata } = storeToRefs(conversionStore);
 
-async function handleFileUploaded(file: any) {
-  currentFileId.value = file.id;
-  currentFileMetadata.value = file.metadata;
+function handleFileUploaded() {
+  console.log('Fichier uploadé avec succès');
 }
 </script>
