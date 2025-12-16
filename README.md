@@ -27,26 +27,34 @@
 - **API REST complète** - Intégration facile dans vos workflows
 - **Docker ready** - Déploiement en un clic
 
-## ⚙️ Formats et codecs supportés
 
-ConvertFlow utilise FFmpeg côté serveur pour la conversion universelle de fichiers média.
+## Formats et codecs supportés
 
-### Codecs supportés
+ConvertFlow s'appuie sur FFmpeg (v8.x) côté serveur pour la conversion universelle de fichiers média. Le support côté client (navigateur) utilise WebCodecs lorsque disponible.
 
-| Type | Formats supportés | Utilisation |
-|------|------------------|-------------|
-| **Vidéo** | H.264 (AVC), VP8, VP9, AV1 | Conversion, redimensionnement, trim |
-| **Audio** | AAC, Opus, MP3, Vorbis | Extraction, conversion |
-| **Conteneurs** | MP4, WebM, WAV | Input/Output |
+### Codecs et formats supportés
+
+| Type      | Formats/Codecs pris en charge         | Utilisation principale                |
+|-----------|---------------------------------------|---------------------------------------|
+| Vidéo     | H.264 (AVC), VP8, VP9, AV1           | Conversion, redimensionnement, trim   |
+| Audio     | AAC, Opus, MP3, Vorbis               | Extraction, conversion                |
+| Conteneur | MP4, WebM, WAV, MOV, MKV             | Entrée/Sortie                         |
 
 ### ⚠️ Limitations importantes
 
-**Codecs NON supportés (erreur "undecodable_source_codec"):**
-- H.265 (HEVC) - support limité
-- ProRes, DNxHD, DivX
-- Codecs propriétaires
+**Codecs NON supportés (erreur `undecodable_source_codec`) :**
 
-**Solutions:**
+- H.265 (HEVC) – support partiel/limité selon build FFmpeg
+- ProRes, DNxHD, DivX
+- Codecs propriétaires (ex : certains formats caméras, DRM)
+
+**Solutions recommandées :**
+
+- 🌐 Utiliser ConvertFlow côté client (navigateur) si WebCodecs est disponible pour un support natif étendu
+- 🔄 Pré-convertir vos fichiers avec FFmpeg (ligne de commande) pour garantir la compatibilité universelle
+- 🚀 Adapter le déploiement serveur (voir [FFMPEG_GUIDE.md](FFMPEG_GUIDE.md)) pour activer plus de codecs si besoin
+
+> **Note :** En environnement Node.js/Docker, le support des codecs dépend de la version et de la compilation de FFmpeg. Pour une production robuste, privilégiez une image Docker FFmpeg complète et vérifiez les codecs disponibles (`ffmpeg -codecs`).
 1. 🌐 **Utiliser ConvertFlow côté client** (navigateur) où WebCodecs est pleinement implémenté
 2. 🔄 **Pré-convertir avec FFmpeg** pour compatibilité universelle
 3. 🚀 **Migrer vers FFmpeg côté serveur** (voir [FFMPEG_GUIDE.md](FFMPEG_GUIDE.md))
