@@ -162,8 +162,9 @@ class FFmpegAPI {
    * Télécharger un fichier de sortie
    */
   getDownloadUrl(outputPath: string): string {
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
-    return `${baseUrl}${outputPath}`;
+    // Utilise l'origine courante pour éviter les soucis de CORS/hosts (nginx, reverse proxy)
+    const base = window.location.origin;
+    return `${base}${outputPath}`;
   }
 }
 

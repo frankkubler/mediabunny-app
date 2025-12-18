@@ -25,7 +25,31 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      // Autorise les appels API côté client vers l'instance locale
+      connectSrc: [
+        "'self'",
+        // Accès direct au backend (dev/local)
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        // Accès via service docker interne/nginx
+        'http://convertflow-app:3000',
+        'http://nginx',
+        // Autoriser les schémas génériques (http/https/ws) pour les proxies
+        'http:',
+        'https:',
+        'ws:',
+        'wss:',
+      ],
+      imgSrc: ["'self'", 'data:'],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      objectSrc: ["'none'"],
+    }
+  }
 }));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*'
